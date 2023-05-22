@@ -1,7 +1,16 @@
-const express = require('express')
-const path = require('path')
-const PORT = process.env.PORT || 3001
-const app = express()
+const mysql = require('mysql');
+const inquirer = require('inquirer');
+require('console.table');
 
-const  routesApi = require('./routes/routesApi')
-const routesHtml = require('./routes/routesHtml')
+const connection = mysql.createConnection( {
+    host: 'localhost',
+    port: '3000',
+    user: 'root',
+    password: '',
+    database: 'employeess_db'
+});
+
+const messagePrompt = {
+    viewEmployees: 'View All Employees'
+}
+
