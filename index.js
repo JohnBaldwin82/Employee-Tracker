@@ -92,7 +92,7 @@ function viewEmployee() {
   connection.query(query, (err, res) => {
     if (err) throw err;
     console.log("\n");
-    console.log('VIEW EMPLOYEES');
+    console.log("VIEW EMPLOYEES");
     console.log("\n");
     console.table(res);
     prompt();
@@ -100,49 +100,104 @@ function viewEmployee() {
 }
 
 function viewDepartment() {
-    let query = `SELECT department.name AS department, job.title, employee.id, employee.first_name, employee.last_name
+  let query = `SELECT department.name AS department, job.title, employee.id, employee.first_name, employee.last_name
     FROM employee
     LEFT JOIN job ON (job.id = employee.job_id)
     LEFT JOIN department ON (department.id = job.department_id)
     GROUP BY department.name;`;
-    connection.query(query, (err, res) => {
-        if (err) throw err;
-        console.log("\n");
-        console.log('VIEW DEPARTMENT');
-        console.log("\n");
-        console.table(res);
-        prompt();
-      });
+  connection.query(query, (err, res) => {
+    if (err) throw err;
+    console.log("\n");
+    console.log("VIEW DEPARTMENT");
+    console.log("\n");
+    console.table(res);
+    prompt();
+  });
 }
 
 function viewSupervisor() {
-    let query = `SELECT CONCAT(supervisor.first_name, '', supervisor.last_name) AS manager, department.name AS department, employee.id, employee.first_name, employee.last_name, job.title
+  let query = `SELECT CONCAT(supervisor.first_name, '', supervisor.last_name) AS manager, department.name AS department, employee.id, employee.first_name, employee.last_name, job.title
     FROM employee
     LEFT JOIN employee supervisor ON supervisor.id = employee.supervisor.id
     LEFT JOIN job ON (job.id = employee.job_id && employee.supervisor_id != 'NULL')
     GROUP BY supervisor;`;
-    connection.query(query, (err, res) => {
-        if (err) throw err;
-        console.log("\n");
-        console.log('VIEW SUPERVISOR');
-        console.log("\n");
-        console.table(res);
-        prompt();
-      });
+  connection.query(query, (err, res) => {
+    if (err) throw err;
+    console.log("\n");
+    console.log("VIEW SUPERVISOR");
+    console.log("\n");
+    console.table(res);
+    prompt();
+  });
 }
 
 function viewJobs() {
-    let query = `SELECT job.title, employee.id, employee.first_name, employee.last_name, department.name AS department
+  let query = `SELECT job.title, employee.id, employee.first_name, employee.last_name, department.name AS department
     FROM employee
     LEFT JOIN job ON (job.id = employee.job_id)
     LEFT JOIN department ON (department.id - job.department_id)
     GROUP BY job.title;`;
-    connection.query(query, (err, res) => {
+  connection.query(query, (err, res) => {
+    if (err) throw err;
+    console.log("\n");
+    console.log("VIEW SUPERVISOR");
+    console.log("\n");
+    console.table(res);
+    prompt();
+  });
+}
+
+async function addEmployee() {
+  const addName = await inquirer.prompt(addName());
+  connection.query(
+    "SELECT job.id, job.title FROM job GROUP BY job.id;",
+    async (err, res) => {
+      if (err) throw err;
+      const { job } = await inquirer.prompt([
+        {
+          name: "job",
+          type: "list",
+          questions: () => res.map((res) => res.title),
+          message: "What job are you looking for?: ",
+        },
+      ]);
+      let jobId;
+      for (const line of res) {
+        if (line.title === job) {
+          jobId = line.id;
+          continue;
+        }
+      }
+
+      connection.query("SELECT * FROM employee", async (err, res) => {
         if (err) throw err;
-        console.log("\n");
-        console.log('VIEW SUPERVISOR');
-        console.log("\n");
-        console.table(res);
-        prompt();
+        let questions = res.map((res) => `${res.first_name} ${res.last_name}`);
+        questions.push("none");
+        let { supervisor } = await inquirer.prompt([
+          {
+            name: "supervisor",
+            type: "list",
+            questions: questions,
+            message: "Choose the supervisor",
+          },
+        ]);
+        let supervisorId;
+        let supervisorName;
+        if (supervisor === "none") {
+          supervisorId = null;
+        } else {
+          for (const info of res) {
+            info.fullName === supervisor`${info.firstName} ${info.last_name}`;
+            if (info.fullName === supervisor) {
+              supervisorId = info.id;
+              supervisorName = info.fullName;
+              console.log(supervisorId);
+              console.log(supervisorName);
+              continue;
+            }
+          }
+        }
       });
+    }
+  );
 }
