@@ -19,7 +19,7 @@ const connection = mysql.createConnection({
   port: "3000",
   user: "root",
   password: "",
-  database: "employeess_db",
+  database: "employees_db",
 });
 
 connection.connect((err) => {
@@ -85,7 +85,7 @@ function prompt() {
 function viewEmployee() {
   let query = `SELECT employee.id, employee.first_name, employee.last_name, job.title, department.name AS department, job.salary, CONCAT(supervisor.first_name, '', supervisor.last_name) AS 
     supervisor FROM employee
-    LEFT JOIHN employee supervisor on supervisor.id = employee.supervisor_id
+    LEFT JOIN employee supervisor on supervisor.id = employee.supervisor_id
     INNER JOIN job ON (job.id = employee.job_id)
     INNER JOIN department ON (department.id = job.department_id)
     GROUP BY employee.id;`;
@@ -118,7 +118,7 @@ function viewDepartment() {
 function viewSupervisor() {
   let query = `SELECT CONCAT(supervisor.first_name, '', supervisor.last_name) AS manager, department.name AS department, employee.id, employee.first_name, employee.last_name, job.title
     FROM employee
-    LEFT JOIN employee supervisor ON supervisor.id = employee.supervisor.id
+    LEFT JOIN employee supervisor on supervisor.id = employee.supervisor.id
     LEFT JOIN job ON (job.id = employee.job_id && employee.supervisor_id != 'NULL')
     GROUP BY supervisor;`;
   connection.query(query, (err, res) => {
