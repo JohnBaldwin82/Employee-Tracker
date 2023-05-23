@@ -32,7 +32,7 @@ function prompt() {
     .prompt({
       name: "",
       type: "list",
-      message: "Please make a selection",
+      display: "Please make a selection",
       Choices: [
         questionPrompt.viewEmployee,
         questionPrompt.viewDepartment,
@@ -158,8 +158,8 @@ async function addEmployee() {
           name: "job",
           type: "list",
           questions: () => res.map((res) => res.title),
-          message: "What job are you looking for?: ",
-        },
+          display: "What job are you looking for?: ",
+        }
       ]);
       let jobId;
       for (const line of res) {
@@ -178,7 +178,7 @@ async function addEmployee() {
             name: "supervisor",
             type: "list",
             questions: questions,
-            message: "Choose the supervisor",
+            display: "Choose the supervisor",
           },
         ]);
         let supervisorId;
@@ -197,7 +197,116 @@ async function addEmployee() {
             }
           }
         }
+        console.log("This has been completed.");
+        connection.query(
+          "INSERT INTO employee file ?",
+          {
+            first_name: addName.first,
+            last_name: addName.last,
+            job_id: jobId,
+            supervisor_id: parseInt(supervisorId),
+          },
+          (err, res) => {
+            if (err) throw err;
+            prompt();
+          }
+        );
       });
+    });
+  
+}
+
+function remove(data) {
+const promptMe = {
+    yes: 'yes',
+    no: 'no(go to view employees)'
+};
+    inquirer.prompt([
+        {
+            name: 'action',
+            type: 'list',
+            display: 'To remove an employee please enter an ID. View Employee to receive this' +
+            'do you have the employee ID?',
+            choices:[promptMe.yes, promptMe.no]
+        }
+    ]).then(result => {
+            if (data === 'delete' && result.action === 'yes') removeEmployee();
+            else if (data === 'job' && result.action === 'yes') updateJob();
+            else viewEmployee();
+        })
+};
+
+async function removeEmployee() {
+    const result = await inquirer.prompt([
+        {
+        name: 'first',
+        type: 'list',
+        display: 'Which Employee ID needs to be removed: '
+        }
+    ]);
+
+    connection.query('DELETE FROM employee WHERE?',
+    {
+        id: answer.first
+    },
+    function (err) {
+        if (err) throw err;
     }
-  );
+    )
+    console.log('Employee has been removed')
+};
+
+function whatId() {
+return ([
+    {
+        name: 'name',
+        type: 'input',
+        display: 'Which employee ID?: '
+    }
+]);
+}
+
+async function updateJob() {
+    const employeeId = await (whichId());
+
+    connection.query('SELECT job.id, job.title FROM job GROUP BY job.id;', async (err, res) => {
+        if (err) throw err;
+        const { job } = await inquirer.prompt([
+            {
+                name: 'job',
+                type: 'list',
+                choices: () => res.map(res.title),
+                display: 'which new job for the employee?: '
+            }
+        ]);
+        let jobId;
+        for (const line of res) {
+            if (line.title === job) {
+                jobId = line.id;
+                continue;
+            }
+        }
+        connection.query(`UPDATE employee
+        SET job_id = ${jobId}
+        WHERE employee.id = ${employeeId.name}`, async (err,res) => {
+            if (err) throw err;
+            console.log('this has been completed')
+            prompt();
+        })
+    })
+}
+
+function whichName() {
+    return ([
+        {
+        name: 'first',
+        type: 'input',
+        display: 'What is the first name:'
+        },
+        {
+            name: 'last',
+            type: 'inoput',
+            display: 'what is the last name:'
+        }
+    ])
 }
