@@ -1,6 +1,7 @@
-const mysql = require("mysql");
+const mysql = require("mysql2");
 const inquirer = require("inquirer");
 require("console.table");
+require('dotenv').config();
 
 const questionPrompt = {
   viewEmployee: "View All Employees",
@@ -17,8 +18,8 @@ const questionPrompt = {
 const connection = mysql.createConnection({
   host: "localhost",
   port: "3000",
-  user: "root",
-  password: "",
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
   database: "employees_db",
 });
 

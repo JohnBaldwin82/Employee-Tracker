@@ -1,33 +1,25 @@
-SELECT job.id, job.title, job.salary FROM job GROUP BY job.id
-SELECT job.id, job.title FROM job GROUP BY job.id;
-SELECT * FROM employee;
+DROP DATABASE IF EXISTS employees_db;
+CREATE DATABASE employees_db;
 
-SELECT department.id, department.name FROM department GROUP BY department.id;
+USE employees_db;
 
-SELECT department.name AS department, job.title, employee.id, employee.first_name, employee.last_name
-    FROM employee
-    LEFT JOIN job ON (job.id = employee.job.id)
-    LEFT JOIN department ON (department.id = job.department_id)
-    GROUP BY department.name;
+CREATE TABLE department (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(45) UNIQUE NOT NULL
+);
 
-    SELECT CONCAT(supervisor.first_name, '', supervisor.last_name) AS supervisor, department.name AS department, employee.id, employee.first_name, employee.last_name, job.title
-    FROM employee
-    LEFT JOIN employee supervisor, on supervisor.id = employee.supervisor_id
-    INNER JOIN job ON (job.id = employee.job_id && employee.supervisor.id != 'NULL')
-    INNER JOIN department ON (department.id = job.department_id)
-    GROUP BY supervisor;
+CREATE TABLE job (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(45) UNIQUE NOT NULL,
+    salary DECIMAL UNSIGNED NOT NULL,
+    department_id INT UNSIGNED NOT NULL
 
-    SELECT job.title, employee.id, employee.first_name, employee.last_name, department.name AS department
-    FROM employee
-    LEFT JOIN job ON (job.id = employee.job_id)
-    LEFT JOIN department ON (department.id = job.department_id)
-    GROUP BY job.title;
+);
 
-     SELECT employee.id, smployee.first_name, employee.last_name, job.title, department.name AS department, job.salary, CONCAT(supervisor.first_name, '', supervisor.last_name) AS supervisor
-     FROM employee
-     LEFT JOIN employee supervisor on supervisor.id = employee.supervisor_id
-     INNER JOIN job ON (job_id = employee.job_id)
-     INNER JOIN department ON (department.id = job.department_id)
-     GROUP BY employee.id
-
-     SELECT first_name, last_name, job_id FROM employee WHERE employee.id = 4
+CREATE TABLE employee (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(45) NOT NULL,
+    last_name VARCHAR(45) NOT NULL,
+    job_id VARCHAR(45) NOT NULL,
+    supervisor_id INT UNSIGNED
+);
