@@ -1,23 +1,24 @@
 const mysql = require("mysql2");
 const inquirer = require("inquirer");
 require("console.table");
-require('dotenv').config();
+require("dotenv").config();
 
 const questionPrompt = {
   viewEmployee: "View All Employees",
-  viewDepartment: "View employees by department",
+  viewDepartment: "View all departments",
   viewSupervisor: "View Managers employees",
   addEmployee: "Add employee",
   removeEmployee: "Remove employee",
   updateJob: "Update role of employee",
   updateEmployeeSupervisor: "Update manager of employee",
   viewJobs: "View all roles",
+  addDepartment: "Add Department",
   end: "Leave",
 };
 
 const connection = mysql.createConnection({
-  host: "localhost",
-  port: "3000",
+  host: "127.0.0.1",
+
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: "employees_db",
@@ -30,24 +31,27 @@ connection.connect((err) => {
 
 function prompt() {
   inquirer
-    .prompt({
-      name: "",
-      type: "list",
-      display: "Please make a selection",
-      Choices: [
-        questionPrompt.viewEmployee,
-        questionPrompt.viewDepartment,
-        questionPrompt.viewSupervisor,
-        questionPrompt.addEmployee,
-        questionPrompt.updateJob,
-        questionPrompt.updateEmployeeSupervisor,
-        questionPrompt.viewJobs,
-        questionPrompt.end,
-      ],
-    })
+    .prompt([
+      {
+        name: "questions",
+        type: "list",
+        display: "Please make a selection",
+        choices: [
+          questionPrompt.viewEmployee,
+          questionPrompt.viewDepartment,
+          questionPrompt.viewSupervisor,
+          questionPrompt.addEmployee,
+          questionPrompt.updateJob,
+          questionPrompt.updateEmployeeSupervisor,
+          questionPrompt.viewJobs,
+          questionPrompt.addDepartment,
+          questionPrompt.end,
+        ],
+      },
+    ])
     .then((answer) => {
       console.log("answer", answer);
-      switch (answer.action) {
+      switch (answer.questions) {
         case questionPrompt.viewEmployee:
           viewEmployee();
           break;
@@ -76,6 +80,10 @@ function prompt() {
           viewJobs();
           break;
 
+          case questionPrompt.addDepartment:
+          addDepartment();
+          break;
+
         case questionPrompt.end:
           end();
           break;
@@ -101,16 +109,9 @@ function viewEmployee() {
 }
 
 function viewDepartment() {
-  let query = `SELECT department.name AS department, job.title, employee.id, employee.first_name, employee.last_name
-    FROM employee
-    LEFT JOIN job ON (job.id = employee.job_id)
-    LEFT JOIN department ON (department.id = job.department_id)
-    GROUP BY department.name;`;
+  let query = `SELECT * FROM department;`;
   connection.query(query, (err, res) => {
     if (err) throw err;
-    console.log("\n");
-    console.log("VIEW DEPARTMENT");
-    console.log("\n");
     console.table(res);
     prompt();
   });
@@ -136,8 +137,7 @@ function viewJobs() {
   let query = `SELECT job.title, employee.id, employee.first_name, employee.last_name, department.name AS department
     FROM employee
     LEFT JOIN job ON (job.id = employee.job_id)
-    LEFT JOIN department ON (department.id - job.department_id)
-    GROUP BY job.title;`;
+    LEFT JOIN department ON (department.id = job.department_id);`;
   connection.query(query, (err, res) => {
     if (err) throw err;
     console.log("\n");
@@ -160,7 +160,7 @@ async function addEmployee() {
           type: "list",
           questions: () => res.map((res) => res.title),
           display: "What job are you looking for?: ",
-        }
+        },
       ]);
       let jobId;
       for (const line of res) {
@@ -213,101 +213,120 @@ async function addEmployee() {
           }
         );
       });
-    });
-  
+    }
+  );
 }
 
 function remove(data) {
-const promptMe = {
-    yes: 'yes',
-    no: 'no(go to view employees)'
-};
-    inquirer.prompt([
-        {
-            name: 'action',
-            type: 'list',
-            display: 'To remove an employee please enter an ID. View Employee to receive this' +
-            'do you have the employee ID?',
-            choices:[promptMe.yes, promptMe.no]
-        }
-    ]).then(result => {
-            if (data === 'delete' && result.action === 'yes') removeEmployee();
-            else if (data === 'job' && result.action === 'yes') updateJob();
-            else viewEmployee();
-        })
-};
+  const promptMe = {
+    yes: "yes",
+    no: "no(go to view employees)",
+  };
+  inquirer
+    .prompt([
+      {
+        name: "action",
+        type: "list",
+        display:
+          "To remove an employee please enter an ID. View Employee to receive this" +
+          "do you have the employee ID?",
+        choices: [promptMe.yes, promptMe.no],
+      },
+    ])
+    .then((result) => {
+      if (data === "delete" && result.action === "yes") removeEmployee();
+      else if (data === "job" && result.action === "yes") updateJob();
+      else viewEmployee();
+    });
+}
 
 async function removeEmployee() {
-    const result = await inquirer.prompt([
-        {
-        name: 'first',
-        type: 'list',
-        display: 'Which Employee ID needs to be removed: '
-        }
-    ]);
-
-    connection.query('DELETE FROM employee WHERE?',
+  const result = await inquirer.prompt([
     {
-        id: answer.first
+      name: "first",
+      type: "list",
+      display: "Which Employee ID needs to be removed: ",
+    },
+  ]);
+
+  connection.query(
+    "DELETE FROM employee WHERE?",
+    {
+      id: answer.first,
     },
     function (err) {
-        if (err) throw err;
+      if (err) throw err;
     }
-    )
-    console.log('Employee has been removed')
-};
+  );
+  console.log("Employee has been removed");
+}
 
 function whatId() {
-return ([
+  return [
     {
-        name: 'name',
-        type: 'input',
-        display: 'Which employee ID?: '
-    }
-]);
+      name: "name",
+      type: "input",
+      display: "Which employee ID?: ",
+    },
+  ];
 }
 
 async function updateJob() {
-    const employeeId = await (whichId());
+  const employeeId = await whichId();
 
-    connection.query('SELECT job.id, job.title FROM job GROUP BY job.id;', async (err, res) => {
-        if (err) throw err;
-        const { job } = await inquirer.prompt([
-            {
-                name: 'job',
-                type: 'list',
-                choices: () => res.map(res.title),
-                display: 'which new job for the employee?: '
-            }
-        ]);
-        let jobId;
-        for (const line of res) {
-            if (line.title === job) {
-                jobId = line.id;
-                continue;
-            }
+  connection.query(
+    "SELECT job.id, job.title FROM job GROUP BY job.id;",
+    async (err, res) => {
+      if (err) throw err;
+      const { job } = await inquirer.prompt([
+        {
+          name: "job",
+          type: "list",
+          choices: () => res.map(res.title),
+          display: "which new job for the employee?: ",
+        },
+      ]);
+      let jobId;
+      for (const line of res) {
+        if (line.title === job) {
+          jobId = line.id;
+          continue;
         }
-        connection.query(`UPDATE employee
+      }
+      connection.query(
+        `UPDATE employee
         SET job_id = ${jobId}
-        WHERE employee.id = ${employeeId.name}`, async (err,res) => {
-            if (err) throw err;
-            console.log('this has been completed')
-            prompt();
-        })
-    })
+        WHERE employee.id = ${employeeId.name}`,
+        async (err, res) => {
+          if (err) throw err;
+          console.log("this has been completed");
+          prompt();
+        }
+      );
+    }
+  );
+}
+
+function addDepartment() {
+    let query = `INSERT INTO department (name) VALUES ("${}");`
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        console.log ("Succesfully added to database");
+        prompt();
+      });
 }
 
 function whichName() {
-    return ([
-        {
-        name: 'first',
-        type: 'input',
-        display: 'What is the first name:'
-        },
-        {
-            name: 'last',
-            type: 'inoput',
-            display: 'what is the last name:'
-        }
-    ])
+  return [
+    {
+      name: "first",
+      type: "input",
+      display: "What is the first name:",
+    },
+    {
+      name: "last",
+      type: "inoput",
+      display: "what is the last name:",
+    },
+  ];
 }
