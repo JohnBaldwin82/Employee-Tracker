@@ -2,6 +2,10 @@ const mysql = require("mysql2");
 const inquirer = require("inquirer");
 require("console.table");
 require("dotenv").config();
+const pool = mysql.createPool({host:'localhost', user: 'john', database: 'employees_db', password:'coding'});
+const promisePool = pool.promise();
+ 
+
 
 const questionPrompt = {
   viewEmployee: "View All Employees",
@@ -90,7 +94,15 @@ function prompt() {
       }
     });
 }
-
+let employeeChoices = []
+// function getEmployee(){
+//   connection.promise().query('Select * from Employee', (err, res) => {
+//     if (err) throw err;
+//     console.log(res)
+//     employeeChoices = res
+//     return(res)
+//   });
+// }
 function viewEmployee() {
   let query = `SELECT employee.id, employee.first_name, employee.last_name, job.title, department.name AS department, job.salary, CONCAT(supervisor.first_name, '', supervisor.last_name) AS 
     supervisor FROM employee
@@ -272,19 +284,30 @@ function whatId() {
 }
 
 async function updateJob() {
-  const employeeId = await whichId();
-
+  const employeeId = await whatId();
+  const [rows,fields] = await promisePool.query("SELECT * from employee");
+  console.log('employee choices log', rows)
   connection.query(
     "SELECT job.id, job.title FROM job GROUP BY job.id;",
     async (err, res) => {
+      let choices = res.map((item) => item.title)
+      let employeeList = rows.map((item) => `${item.first_name} ${item.last_name}`)
+      console.log(' Heres choices ', choices)
       if (err) throw err;
       const { job } = await inquirer.prompt([
         {
+          name: "employee",
+          type: "list",
+          choices: employeeList,
+          message: "Choose the employee you would like to update: ",
+        },
+        {
           name: "job",
           type: "list",
-          choices: () => res.map(res.title),
+          choices: choices,
           display: "which new job for the employee?: ",
         },
+
       ]);
       let jobId;
       for (const line of res) {
@@ -293,10 +316,13 @@ async function updateJob() {
           continue;
         }
       }
+      console.log('here is job id ', jobId)
+      console.log('here is employeeId ', employeeId)
+      console.log('here is employeeId.name ', employeeId[0].name)
       connection.query(
         `UPDATE employee
         SET job_id = ${jobId}
-        WHERE employee.id = ${employeeId.name}`,
+        WHERE employee.id = ${employeeId[0].name}`,
         async (err, res) => {
           if (err) throw err;
           console.log("this has been completed");
@@ -307,14 +333,29 @@ async function updateJob() {
   );
 }
 
-function addDepartment() {
-    let query = `INSERT INTO department (name) VALUES ("${}");`
-    connection.query(query, (err, res) => {
+  function addDepartment() {
+    inquirer.prompt({
+      type: "input",
+      message: "Which department would you like to add?",
+      name: 'department'
+    }).then(function(answer) {
+
+      connection.query("INSERT INTO department (name) VALUES (?)", [answer.department], function(err, res) {
         if (err) throw err;
-        console.log ("Succesfully added to database");
+        console.table(res)
         prompt();
-      });
-}
+      })
+    })
+  }
+
+// function addDepartment() {
+//     let query = `INSERT INTO department (name) VALUES ("${}");`
+//     connection.query(query, (err, res) => {
+//         if (err) throw err;
+//         console.log ("Succesfully added to database");
+//         prompt();
+//       });
+// }
 
 function whichName() {
   return [
