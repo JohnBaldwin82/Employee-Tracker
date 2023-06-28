@@ -272,19 +272,16 @@ async function removeEmployee() {
   );
   console.log("Employee has been removed");
 }
-
-function whatId() {
-  return [
-    {
-      name: "name",
-      type: "input",
-      display: "Which employee ID?: ",
-    },
-  ];
+//Query your database for the employee name and then grab the id number from the employee that was returned
+async function whatId(employeeFullName) {
+const firstName = employeeFullName.split(" ")[0]
+  const [rows] = await promisePool.query(`SELECT * FROM employee WHERE first_name = '${firstName}'`)
+  console.log('whatId', rows)
+  return rows[0].id
 }
 
 async function updateJob() {
-  const employeeId = await whatId();
+  
   const [rows,fields] = await promisePool.query("SELECT * from employee");
   console.log('employee choices log', rows)
   connection.query(
@@ -294,7 +291,7 @@ async function updateJob() {
       let employeeList = rows.map((item) => `${item.first_name} ${item.last_name}`)
       console.log(' Heres choices ', choices)
       if (err) throw err;
-      const { job } = await inquirer.prompt([
+      const { job, employee } = await inquirer.prompt([
         {
           name: "employee",
           type: "list",
@@ -309,6 +306,8 @@ async function updateJob() {
         },
 
       ]);
+     
+      const employeeId = await whatId(employee);
       let jobId;
       for (const line of res) {
         if (line.title === job) {
@@ -322,7 +321,7 @@ async function updateJob() {
       connection.query(
         `UPDATE employee
         SET job_id = ${jobId}
-        WHERE employee.id = ${employeeId[0].name}`,
+        WHERE employee.id = ${employeeId}`,
         async (err, res) => {
           if (err) throw err;
           console.log("this has been completed");
@@ -357,17 +356,5 @@ async function updateJob() {
 //       });
 // }
 
-function whichName() {
-  return [
-    {
-      name: "first",
-      type: "input",
-      display: "What is the first name:",
-    },
-    {
-      name: "last",
-      type: "inoput",
-      display: "what is the last name:",
-    },
-  ];
-}
+
+function end() 
