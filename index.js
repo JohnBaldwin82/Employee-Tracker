@@ -161,7 +161,21 @@ function viewJobs() {
 }
 
 async function addEmployee() {
-  const addName = await inquirer.prompt(addName());
+  const employeeQuestions = [
+    {
+      type: 'input',
+      name: 'first',
+      message: 'What is the first name of your employee?'
+    },
+    {
+      type: 'input',
+      name: 'last',
+      message: 'What is the last name of your employee?'
+    },
+
+
+  ]
+  const addName = await inquirer.prompt(employeeQuestions);
   connection.query(
     "SELECT job.id, job.title FROM job GROUP BY job.id;",
     async (err, res) => {
@@ -170,8 +184,8 @@ async function addEmployee() {
         {
           name: "job",
           type: "list",
-          questions: () => res.map((res) => res.title),
-          display: "What job are you looking for?: ",
+          choices: () => res.map((res) => res.title),
+          display: "What is the job title for the new employee?: ",
         },
       ]);
       let jobId;
@@ -190,35 +204,38 @@ async function addEmployee() {
           {
             name: "supervisor",
             type: "list",
-            questions: questions,
+            choices: questions,
             display: "Choose the supervisor",
           },
         ]);
         let supervisorId;
-        let supervisorName;
+        let supervisorFirstName;
+        let supervisorLastName
         if (supervisor === "none") {
           supervisorId = null;
         } else {
-          for (const info of res) {
-            info.fullName === supervisor`${info.firstName} ${info.last_name}`;
-            if (info.fullName === supervisor) {
-              supervisorId = info.id;
-              supervisorName = info.fullName;
+          // console.log('here is res', res)
+          for (const employee of res) {
+            // console.log('here is employee', employee)
+            const employeeFullName = `${employee.first_name} ${employee.last_name}`
+            console.log(employeeFullName)
+            // employee.fullName === supervisor`${employee.firstName} ${employee.last_name}`;
+            if (employeeFullName === supervisor) {
+              supervisorId = employee.id;
+              supervisorFirstName = employee.first_name;
+              supervisorLastName = employee.last_name
               console.log(supervisorId);
-              console.log(supervisorName);
+              console.log(supervisorFirstName);
               continue;
             }
           }
         }
         console.log("This has been completed.");
         connection.query(
-          "INSERT INTO employee file ?",
-          {
-            first_name: addName.first,
-            last_name: addName.last,
-            job_id: jobId,
-            supervisor_id: parseInt(supervisorId),
-          },
+         `INSERT INTO employee
+         (first_name, last_name, job_id, supervisor_id)
+         VALUES
+         ('${addName.first}', '${addName.last}', ${jobId}, ${parseInt(supervisorId)})`,
           (err, res) => {
             if (err) throw err;
             prompt();
@@ -228,6 +245,14 @@ async function addEmployee() {
     }
   );
 }
+
+// "INSERT INTO employee file ?",
+// {
+//   first_name: addName.first,
+//   last_name: addName.last,
+//   job_id: jobId,
+//   supervisor_id: parseInt(supervisorId),
+// }
 
 function remove(data) {
   const promptMe = {
@@ -357,4 +382,7 @@ async function updateJob() {
 // }
 
 
-function end() 
+function end() {
+  connection.end();
+  process.exit()
+}
