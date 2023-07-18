@@ -94,15 +94,7 @@ function prompt() {
       }
     });
 }
-let employeeChoices = []
-// function getEmployee(){
-//   connection.promise().query('Select * from Employee', (err, res) => {
-//     if (err) throw err;
-//     console.log(res)
-//     employeeChoices = res
-//     return(res)
-//   });
-// }
+
 function viewEmployee() {
   let query = `SELECT employee.id, employee.first_name, employee.last_name, job.title, department.name AS department, job.salary, CONCAT(supervisor.first_name, '', supervisor.last_name) AS 
     supervisor FROM employee
@@ -246,13 +238,6 @@ async function addEmployee() {
   );
 }
 
-// "INSERT INTO employee file ?",
-// {
-//   first_name: addName.first,
-//   last_name: addName.last,
-//   job_id: jobId,
-//   supervisor_id: parseInt(supervisorId),
-// }
 
 function remove(data) {
   const promptMe = {
@@ -372,14 +357,6 @@ async function updateJob() {
     })
   }
 
-// function addDepartment() {
-//     let query = `INSERT INTO department (name) VALUES ("${}");`
-//     connection.query(query, (err, res) => {
-//         if (err) throw err;
-//         console.log ("Succesfully added to database");
-//         prompt();
-//       });
-// }
 
 
 function end() {
