@@ -14,7 +14,6 @@ const questionPrompt = {
   addEmployee: "Add employee",
   removeEmployee: "Remove employee",
   updateJob: "Update role of employee",
-  updateEmployeeSupervisor: "Update manager of employee",
   viewJobs: "View all roles",
   addDepartment: "Add Department",
   end: "Leave",
@@ -43,10 +42,8 @@ function prompt() {
         choices: [
           questionPrompt.viewEmployee,
           questionPrompt.viewDepartment,
-          questionPrompt.viewSupervisor,
           questionPrompt.addEmployee,
           questionPrompt.updateJob,
-          questionPrompt.updateEmployeeSupervisor,
           questionPrompt.viewJobs,
           questionPrompt.addDepartment,
           questionPrompt.end,
@@ -74,10 +71,6 @@ function prompt() {
 
         case questionPrompt.updateJob:
           updateJob();
-          break;
-
-        case questionPrompt.updateEmployeeSupervisor:
-          updateEmployeeSupervisor();
           break;
 
         case questionPrompt.viewJobs:
@@ -121,21 +114,21 @@ function viewDepartment() {
   });
 }
 
-function viewSupervisor() {
-  let query = `SELECT CONCAT(supervisor.first_name, '', supervisor.last_name) AS manager, department.name AS department, employee.id, employee.first_name, employee.last_name, job.title
-    FROM employee
-    LEFT JOIN employee supervisor on supervisor.id = employee.supervisor.id
-    LEFT JOIN job ON (job.id = employee.job_id && employee.supervisor_id != 'NULL')
-    GROUP BY supervisor;`;
-  connection.query(query, (err, res) => {
-    if (err) throw err;
-    console.log("\n");
-    console.log("VIEW SUPERVISOR");
-    console.log("\n");
-    console.table(res);
-    prompt();
-  });
-}
+// function viewSupervisor() {
+//   let query = `SELECT CONCAT(supervisor.first_name, '', supervisor.last_name) AS manager, employee.id, employee.first_name, employee.last_name, job.title
+//     FROM employee
+//     LEFT JOIN employee supervisor on supervisor.id = employee.supervisor.id
+//     LEFT JOIN job ON (job.id = employee.job_id && employee.supervisor_id != 'NULL')
+//     GROUP BY supervisor;`;
+//   connection.query(query, (err, res) => {
+//     if (err) throw err;
+//     console.log("\n");
+//     console.log("VIEW SUPERVISOR");
+//     console.log("\n");
+//     console.table(res);
+//     prompt();
+//   });
+// }
 
 function viewJobs() {
   let query = `SELECT job.title, employee.id, employee.first_name, employee.last_name, department.name AS department
@@ -327,7 +320,6 @@ async function updateJob() {
       }
       console.log('here is job id ', jobId)
       console.log('here is employeeId ', employeeId)
-      console.log('here is employeeId.name ', employeeId[0].name)
       connection.query(
         `UPDATE employee
         SET job_id = ${jobId}
